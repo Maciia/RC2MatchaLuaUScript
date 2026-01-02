@@ -1,0 +1,182 @@
+loadstring(game:HttpGet("https://arcanecheats.xyz/api/matcha/uilib"))()
+loadstring(game:HttpGet("https://www.arcanecheats.xyz/api/matcha/esplib"))()
+
+repeat wait() until Arcane and ArcaneEsp
+
+local Window = Arcane:CreateWindow("RC2 Script", Vector2.new(420,300), "Synthwave84")
+
+-- ================= ORE GROUPS =================
+
+local GROUP_1_2 = {
+	"Stone","Sand","Clay","Salt","Ice","Snow","Dirt","Mud","Copper","Iron",
+	"Granite","Marble","Limestone","Silver","Ancient Rune","Coal","Bauxite","Scarlet","Gold","Quartz"
+}
+
+local GROUP_3_4 = {
+	"Deepslate","Sapphire","Ruby","Topaz","Pink Diamond","Amber","Jade","Sulfur","Lithium",
+	"Voltshard","Blastshard","Noir","Magma","Crimsone","Meteorite",
+	"Emerald","Diamond","Sphalerite","Cobalt","Wildcore","Cloudnite","Obsidian"
+}
+
+local GROUP_5_EVENT = {
+	"Volcanium","Abyssalite","Gingerbread","Giftium"
+}
+
+local GROUP_COLOR = {
+	["1-2"] = Color3.fromRGB(180,180,180),
+	["3-4"] = Color3.fromRGB(255,180,120),
+	["5-E"] = Color3.fromRGB(255,80,80)
+}
+
+local ORE_GROUP = {}
+for _, o in ipairs(GROUP_1_2) do ORE_GROUP[o] = "1-2" end
+for _, o in ipairs(GROUP_3_4) do ORE_GROUP[o] = "3-4" end
+for _, o in ipairs(GROUP_5_EVENT) do ORE_GROUP[o] = "5-E" end
+
+-- ================= STATE =================
+
+local ESP_ENABLED = false
+local SHOW_NAME = true
+local SHOW_DISTANCE = true
+
+local SELECTED_ORES = {}
+local ACTIVE_ESP = {}
+
+local REFRESH_DELAY = 3
+
+-- ================= ESP CORE (ИСПРАВЛЕННЫЙ) =================
+
+local function ClearESP()
+	for _, esp in ipairs(ACTIVE_ESP) do
+		esp:Destroy()
+	end
+	ACTIVE_ESP = {}
+end
+
+local function GetOnePart(model)
+	if model.PrimaryPart then
+		return model.PrimaryPart
+	end
+	for _, v in ipairs(model:GetChildren()) do
+		if v:IsA("BasePart") then
+			return v
+		end
+	end
+	return nil
+end
+
+local function ApplyESP()
+	ClearESP()
+	if not ESP_ENABLED then return end
+
+	local world = workspace:FindFirstChild("WorldSpawn")
+	if not world then return end
+
+	local oresRoot = world:FindFirstChild("Ores")
+	if not oresRoot then return end
+
+	for _, oreGroup in ipairs(oresRoot:GetChildren()) do
+		if SELECTED_ORES[oreGroup.Name] then
+			for _, oreModel in ipairs(oreGroup:GetChildren()) do
+				local part = GetOnePart(oreModel)
+				if part then
+					local color = GROUP_COLOR[ORE_GROUP[oreGroup.Name]]
+					local esp = ArcaneEsp.new(part):AddEsp(color)
+
+					if SHOW_NAME then
+						esp:AddTitle(Color3.new(1,1,1), oreGroup.Name)
+					end
+
+					if SHOW_DISTANCE then
+						esp:AddDistance(Color3.new(1,1,1))
+					end
+
+					table.insert(ACTIVE_ESP, esp)
+				end
+			end
+		end
+	end
+end
+
+task.spawn(function()
+	while true do
+		task.wait(REFRESH_DELAY)
+		if ESP_ENABLED then
+			ApplyESP()
+		end
+	end
+end)
+
+-- ================= VISUALS =================
+
+Window:CreateTabSection("ESP LIB")
+Window:CreateTab("Main")
+
+local Visual = Window:CreateSection("ESP", "Main")
+
+Visual:AddToggle("Enable ESP", false, function(v)
+	ESP_ENABLED = v
+	ApplyESP()
+end)
+
+Visual:AddToggle("Show Name", true, function(v)
+	SHOW_NAME = v
+	ApplyESP()
+end)
+
+Visual:AddToggle("Show Distance", true, function(v)
+	SHOW_DISTANCE = v
+	ApplyESP()
+end)
+
+local Colors = Window:CreateSection("Change Colors", "Main")
+
+Colors:AddColorPicker("Tier 1 and 2", GROUP_COLOR["1-2"], function(c)
+	GROUP_COLOR["1-2"] = c
+	ApplyESP()
+end)
+
+Colors:AddColorPicker("Tier 3 and 4", GROUP_COLOR["3-4"], function(c)
+	GROUP_COLOR["3-4"] = c
+	ApplyESP()
+end)
+
+Colors:AddColorPicker("Tier 5 and Event", GROUP_COLOR["5-E"], function(c)
+	GROUP_COLOR["5-E"] = c
+	ApplyESP()
+end)
+
+-- ================= ORE =================
+
+Window:CreateTab("Select ESP")
+
+local S12 = Window:CreateSection("Tier 1 and 2", "Select ESP")
+S12:AddMultipleDropdown("Ores", GROUP_1_2, {}, function(tbl)
+	for _, o in ipairs(GROUP_1_2) do SELECTED_ORES[o] = false end
+	for _, o in ipairs(tbl) do SELECTED_ORES[o] = true end
+	ApplyESP()
+end)
+
+local S34 = Window:CreateSection("Tier 3 and 4", "Select ESP")
+S34:AddMultipleDropdown("Ores", GROUP_3_4, {}, function(tbl)
+	for _, o in ipairs(GROUP_3_4) do SELECTED_ORES[o] = false end
+	for _, o in ipairs(tbl) do SELECTED_ORES[o] = true end
+	ApplyESP()
+end)
+
+local S5E = Window:CreateSection("Tier 5 and Event", "Select ESP")
+S5E:AddMultipleDropdown("Ores", GROUP_5_EVENT, {}, function(tbl)
+	for _, o in ipairs(GROUP_5_EVENT) do SELECTED_ORES[o] = false end
+	for _, o in ipairs(tbl) do SELECTED_ORES[o] = true end
+	ApplyESP()
+end)
+
+-- ================= SETTINGS =================
+
+local Info = Window:CreateSection("by Chatgpt and RUS TG @W3bLeak", "Settings")
+
+Info:AddButton("Thanks", function()
+	print("matcha-latte.win")
+end)
+
+Window:Finalize()
